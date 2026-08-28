@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
 
 html {
-    background: linear-gradient(135deg, #0a0a0a, #1a1a1a, #0f0f0f);
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     background-attachment: fixed;
     min-height: 100vh;
     color: white;
@@ -29,7 +29,7 @@ h1 {
 
 h1#msgs {
     font-size: 22px;
-    color: #d0d0d0;
+    color: #ffd700;
     margin: 40px auto;
     padding: 20px;
     max-width: 80%;
@@ -47,7 +47,7 @@ a {
 hr {
     border: none;
     height: 2px;
-    background: linear-gradient(to right, transparent, #777777, transparent);
+    background: linear-gradient(to right, transparent, #4a9eff, transparent);
     margin: 20px auto;
     width: 80%;
 }
@@ -96,7 +96,7 @@ hr {
 }
 
 .btn {
-    background: linear-gradient(145deg, #3a3a3a, #1c1c1c);
+    background: linear-gradient(145deg, #1a3a5c, #003263);
     color: white;
     width: 280px;
     height: 50px;
@@ -117,17 +117,17 @@ hr {
 }
 
 .btn:hover {
-    background: linear-gradient(145deg, #555555, #303030);
+    background: linear-gradient(145deg, #0073e6, #005bb5);
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 105, 217, 0.4);
 }
 
 .btn-onln {
-    background: linear-gradient(145deg, #3a3a3a, #202020);
+    background: linear-gradient(145deg, #2d6a4f, #1b4332);
 }
 
 .btn-onln:hover {
-    background: linear-gradient(145deg, #555555, #3a3a3a);
+    background: linear-gradient(145deg, #40916c, #2d6a4f);
 }
 
 /* تنسيق خاص للعنوان */
@@ -149,12 +149,12 @@ hr {
     display: block;
     font-size: 3rem;
     font-weight: 900;
-    background: linear-gradient(90deg, #d0d0d0, #888888, #d0d0d0, #eeeeee, #d0d0d0);
+    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700, #ffec80, #ffd700);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: goldShine 3s linear infinite;
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.25));
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
     letter-spacing: 5px;
 }
 
@@ -166,8 +166,8 @@ hr {
     display: inline-block;
     font-size: 2rem;
     font-weight: 700;
-    color: #c0c0c0;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.45), 0 0 30px rgba(255, 255, 255, 0.2);
+    color: #00bfff;
+    text-shadow: 0 0 15px rgba(0, 191, 255, 0.8), 0 0 30px rgba(0, 191, 255, 0.4);
     margin: 10px 10px;
     letter-spacing: 4px;
 }
@@ -176,8 +176,8 @@ hr {
     display: inline-block;
     font-size: 2rem;
     font-weight: 700;
-    color: #a0a0a0;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.35), 0 0 30px rgba(255, 255, 255, 0.15);
+    color: #ff4757;
+    text-shadow: 0 0 15px rgba(255, 71, 87, 0.8), 0 0 30px rgba(255, 71, 87, 0.4);
     margin: 10px 10px;
     letter-spacing: 4px;
 }
@@ -194,14 +194,14 @@ hr {
 
 .version-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #d0d0d0, #333333);
-    color: #f0f0f0;
+    background: linear-gradient(135deg, #ffd700, #ff6b6b);
+    color: #1a1a1a;
     padding: 8px 25px;
     border-radius: 30px;
     font-weight: 800;
     font-size: 1rem;
     margin: 15px 0 25px;
-    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
     letter-spacing: 2px;
     text-transform: uppercase;
     font-family: 'Orbitron', sans-serif;
@@ -211,12 +211,12 @@ hr {
 .credit {
     font-size: 1.1rem;
     margin-bottom: 5px;
-    color: #d0d0d0;
+    color: #ddd;
     font-weight: 500;
 }
 
 .credit-link {
-    background: linear-gradient(90deg, #d0d0d0, #888888);
+    background: linear-gradient(90deg, #ffd700, #ffaa00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-decoration: none;
