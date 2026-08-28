@@ -1,251 +1,454 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+/* ============================================
+   التصميم الكامل من المشروع الأول (Mustafa)
+   ============================================ */
 
-html {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    background-attachment: fixed;
-    min-height: 100vh;
-    color: white;
-    text-align: center;
-    font-family: 'Rajdhani', sans-serif;
-    overflow-x: hidden;
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    padding: 20px;
+    background: linear-gradient(135deg, #0a0e17 0%, #1a1a2e 50%, #16213e 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-h1 {
-    text-shadow: 0.1em 0.1em 0.2em rgba(0, 0, 0, 0.8);
-    font-size: 25px;
-    color: #ffffff;
-    margin-bottom: 20px;
-    font-family: 'Orbitron', sans-serif;
-}
-
-h1#msgs {
-    font-size: 22px;
-    color: #ffd700;
-    margin: 40px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 20px;
-    max-width: 80%;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-family: 'Rajdhani', sans-serif;
+    margin: 0;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-hr {
-    border: none;
-    height: 2px;
-    background: linear-gradient(to right, transparent, #4a9eff, transparent);
-    margin: 20px auto;
-    width: 80%;
-}
-
-#progress {
-    display: block;
-    width: 80%;
-    margin: 20px auto;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-#menu {
-    display: block;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+/* Container - Glassmorphism */
+.container {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-}
-
-#crypto {
-    display: none;
-    max-width: 600px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 40px 50px;
+    max-width: 850px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
     margin: 0 auto;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#tools {
-    display: none;
-}
-
-#lnx {
-    display: none;
-}
-
-#mods {
-    display: none;
-}
-
-.btn {
-    background: linear-gradient(145deg, #1a3a5c, #003263);
-    color: white;
-    width: 280px;
-    height: 50px;
-    padding-bottom: 5px;
-    text-align: center;
-    font-size: 17px;
-    font-weight: 600;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: none;
     transition: all 0.3s ease;
-    cursor: pointer;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    font-family: 'Rajdhani', sans-serif;
 }
 
-.btn:hover {
-    background: linear-gradient(145deg, #0073e6, #005bb5);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 105, 217, 0.4);
+/* Header - شعار Mustafa فقط */
+.site-header {
+    text-align: center;
+    margin-bottom: 20px;
+    background: transparent;
+    border-bottom: none;
+    padding: 0;
 }
 
-.btn-onln {
-    background: linear-gradient(145deg, #2d6a4f, #1b4332);
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
-.btn-onln:hover {
-    background: linear-gradient(145deg, #40916c, #2d6a4f);
+/* إزالة الشعار القديم (NABEELLOGO) */
+.header-logo {
+    display: none;
 }
 
-/* تنسيق خاص للعنوان */
-.title-container {
-    margin-bottom: 30px;
-}
-
+/* عنوان Mustafa الرئيسي - مثل المشروع الأول */
 .main-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2.5rem;
+    font-size: 48px;
     font-weight: 900;
-    line-height: 1.4;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    letter-spacing: -1px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px;
 }
 
-.name-mustafa {
-    display: block;
-    font-size: 3rem;
-    font-weight: 900;
-    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700, #ffec80, #ffd700);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: goldShine 3s linear infinite;
-    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
-    letter-spacing: 5px;
+/* ألوان متحركة لكل حرف */
+.m-1 { color: #ff6b6b; }
+.m-2 { color: #ffa94d; }
+.m-3 { color: #ffd93d; }
+.m-4 { color: #6bcb77; }
+.m-5 { color: #4d96ff; }
+.m-6 { color: #9b59b6; }
+.m-7 { color: #ff6b6b; }
+
+.p-1 { color: #ffd93d; }
+.p-2 { color: #4d96ff; }
+.p-3 { color: #ff6b6b; }
+
+.q-1 { color: #6bcb77; }
+.q-2 { color: #ffa94d; }
+
+.main-title span {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    animation: glow 3s ease-in-out infinite alternate;
 }
 
-@keyframes goldShine {
-    to { background-position: 200% center; }
-}
-
-.ps4-title {
-    display: inline-block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #00bfff;
-    text-shadow: 0 0 15px rgba(0, 191, 255, 0.8), 0 0 30px rgba(0, 191, 255, 0.4);
-    margin: 10px 10px;
-    letter-spacing: 4px;
-}
-
-.ps5-title {
-    display: inline-block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #ff4757;
-    text-shadow: 0 0 15px rgba(255, 71, 87, 0.8), 0 0 30px rgba(255, 71, 87, 0.4);
-    margin: 10px 10px;
-    letter-spacing: 4px;
+@keyframes glow {
+    0% { text-shadow: 0 0 10px rgba(255,255,255,0.05); }
+    100% { text-shadow: 0 0 30px rgba(255,255,255,0.15); }
 }
 
 .subtitle {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1.2rem;
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 16px;
     letter-spacing: 6px;
     text-transform: uppercase;
-    margin-bottom: 15px;
-    font-weight: 600;
+    margin-top: 5px;
+    font-weight: 300;
 }
 
 .version-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #ffd700, #ff6b6b);
-    color: #1a1a1a;
-    padding: 8px 25px;
-    border-radius: 30px;
-    font-weight: 800;
-    font-size: 1rem;
-    margin: 15px 0 25px;
-    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
-    letter-spacing: 2px;
+    background: rgba(77, 150, 255, 0.2);
+    border: 1px solid rgba(77, 150, 255, 0.3);
+    color: #4d96ff;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+/* عناوين الصفحات */
+#UA {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    font-family: 'Orbitron', sans-serif;
+    margin: 10px 0 5px 0;
+    text-align: center;
 }
 
-/* الفوتر */
+/* الخط الفاصل */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    margin: 15px auto 25px auto;
+    width: 80%;
+}
+
+/* ============================================
+   تنسيقات الحالة والأزرار
+   ============================================ */
+
+.btn-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 25px 30px;
+    margin: 10px 0 20px 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* حالة التحميل */
+#state {
+    color: #ffd93d;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+#state.ok { color: #6bcb77; }
+#state.bad { color: #ff6b6b; }
+#state.warn { color: #ffa94d; }
+#state.loading { color: #ffd93d; }
+#state.error { color: #ff6b6b; }
+
+/* معلومات الكشف */
+#det, #cache {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    text-align: center;
+    margin: 5px 0;
+}
+
+#det b, #cache b {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cacheok {
+    color: #6bcb77 !important;
+}
+
+/* خيارات الكيرنل */
+#kernel-options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+#kernel-options > label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-option label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+    cursor: pointer;
+}
+
+/* أزرار الراديو */
+input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+input[type="radio"]:checked {
+    border-color: #4d96ff;
+    background: rgba(77, 150, 255, 0.2);
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: #4d96ff;
+    border-radius: 50%;
+}
+
+/* زر Jailbreak */
+#jeilbrek {
+    background: linear-gradient(135deg, #4d96ff, #6bcb77);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 45px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(77, 150, 255, 0.3);
+    letter-spacing: 1px;
+    width: 100%;
+    max-width: 250px;
+}
+
+#jeilbrek:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(77, 150, 255, 0.4);
+}
+
+#jeilbrek:disabled {
+    background: #2d3748;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Auto Jailbreak */
+.autoJb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+#autoJbLabel {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+input[type="checkbox"]:checked {
+    background: #4d96ff;
+    border-color: #4d96ff;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.mt-2 {
+    margin-top: 0;
+}
+
+/* Console */
+#console, #out {
+    background: rgba(0, 0, 0, 0.5);
+    color: #6bcb77;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    padding: 18px 20px;
+    text-align: left;
+    min-height: 120px;
+    max-height: 200px;
+    border-radius: 12px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 10px 0 0 0;
+    line-height: 1.6;
+}
+
+#console::-webkit-scrollbar, #out::-webkit-scrollbar {
+    width: 6px;
+}
+
+#console::-webkit-scrollbar-track, #out::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#console::-webkit-scrollbar-thumb, #out::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+/* ============================================
+   تذييل الصفحة - مثل المشروع الأول
+   ============================================ */
+
+footer {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
 .credit {
-    font-size: 1.1rem;
-    margin-bottom: 5px;
-    color: #ddd;
-    font-weight: 500;
-}
-
-.credit-link {
-    background: linear-gradient(90deg, #ffd700, #ffaa00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-decoration: none;
-    font-weight: 800;
-    font-size: 1.3rem;
-}
-
-.thanks {
-    font-size: 0.95rem;
-    color: #888;
-    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
     letter-spacing: 1px;
 }
 
-/* استجابة للموبايل */
-@media (max-width: 600px) {
-    .btn {
-        width: 90%;
+.credit-link {
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.credit-link:hover {
+    color: #4d96ff;
+}
+
+.thanks {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 11px;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   استجابة للشاشات الصغيرة
+   ============================================ */
+
+@media (max-width: 768px) {
+    .container {
+        padding: 25px 20px;
+        border-radius: 20px;
     }
-    
+
     .main-title {
-        font-size: 1.8rem;
+        font-size: 32px;
     }
-    
-    .name-mustafa {
-        font-size: 2.5rem;
+
+    .subtitle {
+        font-size: 14px;
+        letter-spacing: 4px;
     }
-    
-    .ps4-title, .ps5-title {
-        font-size: 1.6rem;
+
+    #kernel-options {
+        gap: 12px;
+        flex-direction: column;
+    }
+
+    .radio-option {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #jeilbrek {
+        padding: 12px 30px;
+        font-size: 16px;
+        max-width: 100%;
+    }
+
+    .btn-container {
+        padding: 18px 15px;
+    }
+
+    #console, #out {
+        font-size: 12px;
+        padding: 14px 16px;
+        min-height: 100px;
+    }
+
+    #state {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 18px 12px;
+        border-radius: 16px;
+    }
+
+    .main-title {
+        font-size: 24px;
+    }
+
+    #kernel-options {
+        gap: 8px;
     }
 }
