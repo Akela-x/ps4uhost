@@ -91,7 +91,7 @@ const num_fsets = 0x180;
 const num_spaces = 0x40;
 const num_adjs = 8;
 
-const num_reuses = 0x500;  // Increased from 0x300 for better UAF stability with GoldHen v2.4b18.8
+const num_reuses = 0x500;  // Increased from 0x300 for better UAF stability with GoldHen
 const num_strs = 0x200;
 const num_leaks = 0x100;
 
@@ -772,7 +772,7 @@ async function make_arw(reader, view2, pop) {
     make_arw._buffer = bt.buffer;
 }
 
-// UAF retry wrapper for improved stability with GoldHen v2.4b18.8
+// UAF retry wrapper for improved stability with GoldHen
 async function uaf_ssv_with_retry(fsets, index, save_pop = false, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
