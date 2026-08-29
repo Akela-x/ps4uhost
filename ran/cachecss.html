@@ -1,31 +1,48 @@
 <!DOCTYPE html>
 <html manifest="css.manifest">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Mustafa PS4 PS5 - Cache 10.00-11.02</title>
     <link rel="stylesheet" href="../style.css">
 </head>
+
 <body>
-    <div class="container">
+    <div id="menu">
+
         <header>
             <h1 class="main-title">
                 <span class="name-mustafa">Mustafa</span>
                 <span class="ps4-title">PS4</span>
                 <span class="ps5-title">PS5</span>
             </h1>
+
             <div class="subtitle">Exploit Host</div>
-            <div class="version-badge">FW 10.00 - 11.02</div>
+
+            <div class="version-badge">
+                FW 10.00 - 11.02
+            </div>
         </header>
         
         <hr class="separator">
         
         <div class="status-bar">
-            <span id="msgs" class="status-text loading">⏳ Starting Cache Installation...</span>
+            <span id="msgs" class="status-text loading">
+                ⏳ Starting Cache Installation...
+            </span>
         </div>
         
         <footer>
-            <p class="credit">Designed by <a href="#" class="credit-link">Mustafa</a></p>
-            <p class="thanks">❤️ Special thanks to all scene developers</p>
+            <p class="credit">
+                Designed by <a href="#" class="credit-link">Mustafa</a>
+            </p>
+
+            <p class="thanks">
+                ❤️ Special thanks to all scene developers
+            </p>
         </footer>
+
     </div>
 
     <script>
@@ -49,8 +66,12 @@
         }
         
         window.applicationCache.addEventListener("progress", DLProgress, false);
-        window.applicationCache.oncached = function(e) { DisplayCacheProgress(); };
-        window.applicationCache.onupdateready = function(e) { DisplayCacheProgress(); };
+        window.applicationCache.oncached = function(e) {
+            DisplayCacheProgress();
+        };
+        window.applicationCache.onupdateready = function(e) {
+            DisplayCacheProgress();
+        };
         window.applicationCache.onerror = function(e) {
             msgs.innerHTML = "Error Installing Cache! - Clear and Re-Open Your Browser ...";
             msgs.className = "status-text error";
