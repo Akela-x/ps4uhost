@@ -52,14 +52,14 @@
         var uaFull = navigator.userAgent;
         var match = uaFull.match(/PlayStation 4[ /]([\d.]+)/i);
         var isPS4 = match !== null;
-        var fwVersion = isPS4 ? match[1] : "Unknown";
+        var fwVersion = isPS4 ? match[1] : "Неизвестно";
         var fwNum = parseFloat(fwVersion);
 
         var msgs = document.getElementById('msgs');
 
         function onScriptError() {
             msgs.innerHTML =
-                "Content not Found! - Clear Browser Data and Re-Install Cache ...";
+                "Данные не найдены! — Очистите данные браузера и переустановите кэш ...";
         }
 
         if (!isPS4) {
