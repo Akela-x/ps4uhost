@@ -59,7 +59,7 @@
             msgs.innerHTML = "Офлайн кеш установлен";
             msgs.className = "status-text success";
             setTimeout(function() {
-                msgs.innerHTML = "Закройте и снова откройте браузер ...";
+                msgs.innerHTML = "Закройте и снова откройте браузер...";
             }, 1500);
         }
         
@@ -67,7 +67,7 @@
         window.applicationCache.oncached = function(e) { DisplayCacheProgress(); };
         window.applicationCache.onupdateready = function(e) { DisplayCacheProgress(); };
         window.applicationCache.onerror = function(e) {
-            msgs.innerHTML = "Ошибка установки кэша! - Очистите данные и перезапустите браузер ...";
+            msgs.innerHTML = "Ошибка установки кэша! - Очистите данные и перезапустите браузер...";
             msgs.className = "status-text error";
         };
     </script>
